@@ -474,8 +474,7 @@ class GoogleV2JobProvider(base.JobProvider):
     }
 
     for idx, path in enumerate(docker_paths):
-      env['DIR_{}'.format(idx)] = os.path.join(providers_util.DATA_MOUNT_POINT,
-                                               path)
+      env['DIR_{}'.format(idx)] = providers_util.DATA_MOUNT_POINT + '/' + path
 
     return env
 
@@ -498,7 +497,7 @@ class GoogleV2JobProvider(base.JobProvider):
       env['INPUT_SRC_{}'.format(idx)] = var.value
 
       # For wildcard paths, the destination must be a directory
-      dst = os.path.join(providers_util.DATA_MOUNT_POINT, var.docker_path)
+      dst = providers_util.DATA_MOUNT_POINT + '/' + var.docker_path
       path, filename = os.path.split(dst)
       if '*' in filename:
         dst = '{}/'.format(path)
@@ -524,8 +523,7 @@ class GoogleV2JobProvider(base.JobProvider):
     for idx, var in enumerate(non_empty_outputs):
       env['OUTPUT_{}'.format(idx)] = var.name
       env['OUTPUT_RECURSIVE_{}'.format(idx)] = str(int(var.recursive))
-      env['OUTPUT_SRC_{}'.format(idx)] = os.path.join(
-          providers_util.DATA_MOUNT_POINT, var.docker_path)
+      env['OUTPUT_SRC_{}'.format(idx)] = providers_util.DATA_MOUNT_POINT + '/' + var.docker_path
 
       # For wildcard paths, the destination must be a directory
       if '*' in var.uri.basename:
@@ -560,7 +558,7 @@ class GoogleV2JobProvider(base.JobProvider):
               mounts=[mnt_datadisk],
               commands=[
                   '--implicit-dirs', '--foreground', bucket,
-                  os.path.join(providers_util.DATA_MOUNT_POINT, mount_path)
+                  providers_util.DATA_MOUNT_POINT + '/' + mount_path
               ]),
           google_v2_pipelines.build_action(
               name='mount-wait-{}'.format(bucket),
@@ -569,7 +567,7 @@ class GoogleV2JobProvider(base.JobProvider):
               mounts=[mnt_datadisk],
               commands=[
                   'wait',
-                  os.path.join(providers_util.DATA_MOUNT_POINT, mount_path)
+                  providers_util.DATA_MOUNT_POINT + mount_path
               ])
       ])
     return actions_to_add
@@ -647,7 +645,7 @@ class GoogleV2JobProvider(base.JobProvider):
 
     # Set up command and environments for the prepare, localization, user,
     # and de-localization actions
-    script_path = os.path.join(providers_util.SCRIPT_DIR, script.name)
+    script_path = providers_util.SCRIPT_DIR + '/' + script.name
     prepare_command = _PREPARE_CMD.format(
         mk_runtime_dirs=_MK_RUNTIME_DIRS_CMD,
         script_var=_SCRIPT_VARNAME,

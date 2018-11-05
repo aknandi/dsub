@@ -36,5 +36,5 @@ _RESOURCE_ROOT = os.path.dirname(
 
 
 def get_resource(resource_path, mode='rb'):
-  with open(os.path.join(_RESOURCE_ROOT, resource_path), mode=mode) as f:
+  with open(_RESOURCE_ROOT + '/' + resource_path, mode=mode) as f:
     return f.read()

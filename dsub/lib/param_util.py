@@ -141,7 +141,7 @@ class FileParamUtil(object):
       normalized, docker_path = self._local_uri_rewriter(raw_uri)
     else:
       raise ValueError('File provider not supported: %r' % file_provider)
-    return normalized, os.path.join(self._relative_path, docker_path)
+    return normalized, self._relative_path + '/' + docker_path
 
   @staticmethod
   def _local_uri_rewriter(raw_uri):
@@ -184,11 +184,11 @@ class FileParamUtil(object):
     normed_path = raw_path
     for prefix, replacement in prefix_replacements:
       if normed_path.startswith(prefix):
-        normed_path = os.path.join(replacement, normed_path[len(prefix):])
+        normed_path = replacement + '/' + normed_path[len(prefix):]
     # Because abspath strips the trailing '/' from bare directory references
     # other than root, this ensures that all directory references end with '/'.
     normed_uri = directory_fmt(os.path.abspath(normed_path))
-    normed_uri = os.path.join(normed_uri, filename)
+    normed_uri = normed_uri + '/' + filename
 
     # Generate the path used inside the docker image;
     #  1) Get rid of extra indirects: /this/./that -> /this/that
@@ -307,7 +307,7 @@ class MountParamUtil(object):
     # Assume URI is a directory path.
     raw_uri = directory_fmt(raw_uri)
     _, docker_path = _gcs_uri_rewriter(raw_uri)
-    docker_uri = os.path.join(self._relative_path, docker_path)
+    docker_uri = self._relative_path + '/' + docker_path
     return docker_uri
 
   def make_param(self, name, raw_uri):

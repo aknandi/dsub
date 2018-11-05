@@ -362,8 +362,8 @@ class LocalJobProvider(base.JobProvider):
     )
 
     # Write the runner script and data file to the task_dir
-    script_path = os.path.join(task_dir, 'runner.sh')
-    script_data_path = os.path.join(task_dir, 'data.sh')
+    script_path = task_dirtask_dir + '/' + 'runner.sh'
+    script_data_path = task_dir + '/' + 'data.sh'
     self._write_source_file(script_path,
                             self._resources.get_resource(_RUNNER_SH_RESOURCE))
     self._write_source_file(script_data_path, script_data.encode())
@@ -416,7 +416,7 @@ class LocalJobProvider(base.JobProvider):
           task.get_field('job-id'), task.get_field('task-id'),
           task.get_field('task-attempt'))
       today = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-      with open(os.path.join(task_dir, 'die'), 'wt') as f:
+      with open(task_dir + '/' + 'die', 'wt') as f:
         f.write('Operation canceled at %s\n' % today)
 
       # Next, kill Docker if it's running.
@@ -446,14 +446,14 @@ class LocalJobProvider(base.JobProvider):
 
       # Mark the job as 'CANCELED' for the benefit of dstat
       today = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-      with open(os.path.join(task_dir, 'status.txt'), 'wt') as f:
+      with open(task_dir + '/' +  'status.txt', 'wt') as f:
         f.write('CANCELED\n')
-      with open(os.path.join(task_dir, 'events.txt'), 'a') as f:
+      with open(task_dir + '/' +  'events.txt', 'a') as f:
         f.write('canceled,{}\n'.format(today))
-      with open(os.path.join(task_dir, 'end-time.txt'), 'wt') as f:
+      with open(task_dir + '/' +  'end-time.txt', 'wt') as f:
         f.write(today)
       msg = 'Operation canceled at %s\n' % today
-      with open(os.path.join(task_dir, 'log.txt'), 'a') as f:
+      with open(task_dir + '/' +  'log.txt', 'a') as f:
         f.write(msg)
 
     return (canceled, cancel_errors)
@@ -569,16 +569,16 @@ class LocalJobProvider(base.JobProvider):
     return dt_min <= dt <= dt_max
 
   def _write_task_metadata(self, task_dir, job_descriptor):
-    with open(os.path.join(task_dir, 'meta.yaml'), 'wt') as f:
+    with open(task_dir + '/' + 'meta.yaml', 'wt') as f:
       f.write(job_descriptor.to_yaml())
 
   def _read_task_metadata(self, task_dir):
-    with open(os.path.join(task_dir, 'meta.yaml'), 'rt') as f:
+    with open(task_dir + '/' + 'meta.yaml', 'rt') as f:
       return job_model.JobDescriptor.from_yaml(f.read())
 
   def _get_end_time_from_task_dir(self, task_dir):
     try:
-      with open(os.path.join(task_dir, 'end-time.txt'), 'r') as f:
+      with open(task_dir + '/' + 'end-time.txt', 'r') as f:
         return dsub_util.replace_timezone(
             datetime.datetime.strptime(f.readline().strip(),
                                        '%Y-%m-%d %H:%M:%S.%f'), tzlocal())
@@ -589,7 +589,7 @@ class LocalJobProvider(base.JobProvider):
     last_update = 0
     for filename in ['status.txt', 'log.txt', 'meta.yaml']:
       try:
-        mtime = os.path.getmtime(os.path.join(task_dir, filename))
+        mtime = os.path.getmtime(task_dir + '/' + filename)
         last_update = max(last_update, mtime)
       except (IOError, OSError):
         pass
@@ -600,7 +600,7 @@ class LocalJobProvider(base.JobProvider):
 
   def _get_events_from_task_dir(self, task_dir):
     try:
-      with open(os.path.join(task_dir, 'events.txt'), 'r') as f:
+      with open(task_dir + '/' + 'events.txt', 'r') as f:
         events = []
         for line in f:
           if line.rstrip():
@@ -615,14 +615,14 @@ class LocalJobProvider(base.JobProvider):
 
   def _get_status_from_task_dir(self, task_dir):
     try:
-      with open(os.path.join(task_dir, 'status.txt'), 'r') as f:
+      with open(task_dir + '/' + 'status.txt', 'r') as f:
         return f.readline().strip()
     except (IOError, OSError):
       return None
 
   def _get_log_detail_from_task_dir(self, task_dir):
     try:
-      with open(os.path.join(task_dir, 'log.txt'), 'r') as f:
+      with open(task_dir + '/' + 'log.txt', 'r') as f:
         return f.read().splitlines()
     except (IOError, OSError):
       return None
@@ -653,7 +653,7 @@ class LocalJobProvider(base.JobProvider):
     # Get the pid of the runner
     pid = -1
     try:
-      with open(os.path.join(task_dir, 'task.pid'), 'r') as f:
+      with open(task_dir + '/' + 'task.pid', 'r') as f:
         pid = int(f.readline().strip())
     except (IOError, OSError):
       pass
@@ -767,7 +767,7 @@ class LocalJobProvider(base.JobProvider):
 
   def _localize_inputs_recursive_command(self, task_dir, inputs):
     """Returns a command that will stage recursive inputs."""
-    data_dir = os.path.join(task_dir, _DATA_SUBDIR)
+    data_dir = task_dir + '/' + _DATA_SUBDIR
     provider_commands = [
         providers_util.build_recursive_localize_command(data_dir, inputs,
                                                         file_provider)
@@ -847,10 +847,10 @@ class LocalJobProvider(base.JobProvider):
     # Generate local and GCS delocalize commands.
     cmd_lines.append(
         providers_util.build_recursive_delocalize_command(
-            os.path.join(task_dir, _DATA_SUBDIR), outputs, job_model.P_GCS))
+            task_dir + '/' + _DATA_SUBDIR, outputs, job_model.P_GCS))
     cmd_lines.append(
         providers_util.build_recursive_delocalize_command(
-            os.path.join(task_dir, _DATA_SUBDIR), outputs, job_model.P_LOCAL))
+            task_dir + '/' + _DATA_SUBDIR, outputs, job_model.P_LOCAL))
     return '\n'.join(cmd_lines)
 
   def _delocalize_outputs_commands(self, task_dir, outputs, user_project):
