@@ -20,7 +20,11 @@ from datetime import datetime
 import fnmatch
 import io
 import os
-import pwd
+try:
+    import pwd
+except ImportError:
+   pwd = None
+   import getpass
 import sys
 
 from apiclient import discovery
@@ -83,7 +87,11 @@ def print_error(msg):
 
 def get_os_user():
   """Returns the current OS user, this may be different from the dsub user."""
-  return pwd.getpwuid(os.getuid())[0]
+  if pwd:
+    userName = pwd.getpwuid(os.getuid())[0]
+  else:
+    userName = getpass.getuser()
+  return userName
 
 
 def tasks_to_job_ids(task_list):
